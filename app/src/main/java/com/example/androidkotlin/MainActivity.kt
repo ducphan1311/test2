@@ -6,10 +6,18 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.analytics.ktx.logEvent
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.*
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlin.collections.set
 
@@ -18,9 +26,37 @@ class MainActivity : AppCompatActivity() {
     private var userAdapter : UserAdapter? = null
     private var mangUser : ArrayList<User> = ArrayList()
 
+    private lateinit var firebaseAnalytics: FirebaseAnalytics
+    private lateinit var mUrlWallPaper : String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val mFirebaseAnalytics = FirebaseAnalytics.getInstance(this)
+        val bundle = Bundle()
+        bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "ID")
+        bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "NAME")
+        bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "image")
+        mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle)
+
+        val params2 = Bundle()
+        params2.putString(FirebaseAnalytics.Param.VALUE, "Google Play Games Sign out Button")
+        mFirebaseAnalytics.logEvent("Main_Activity_Button_Pressed", params2)
+
+        firebaseAnalytics = Firebase.analytics
+        FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w("TAG", "Fetching FCM registration token failed", task.exception)
+                return@OnCompleteListener
+            }
+
+            // Get new FCM registration token
+            val token = task.result
+
+        })
+
+
 
         userAdapter = UserAdapter(this, R.layout.line_user, mangUser)
         rcvMain.adapter = userAdapter
@@ -86,17 +122,16 @@ class MainActivity : AppCompatActivity() {
 //        arrayList.removeAt(2) //c
         arrayList.set(0, "d") //a->d
 
-        testSinhVien()
+        logEvent()
     }
-    fun testSinhVien(){
-//        var svl : SinhVien = SinhVien()
-//        svl.setHoTen("Phan DUc")
-//        svl.setDiaChi("nd")
-//        svl.setNamSinh(1999)
-//        svl
-//        Log.d("AAA", svl.getHoTen())
-    }
+    fun logEvent(){
+        firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_ITEM) {
+            param(FirebaseAnalytics.Param.ITEM_ID, 1)
+            param(FirebaseAnalytics.Param.ITEM_NAME, "1123")
+            param(FirebaseAnalytics.Param.CONTENT_TYPE, "image")
+        }
 
+    }
 
     private fun fireBase(){
         //Nhận cơ sở dữ liệu
